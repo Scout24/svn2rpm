@@ -12,3 +12,5 @@ The following people contributed to svn2rpm:
 The logo is based on these public cliparts:
 * http://openclipart.org/detail/26101/cardboard-box-/-package-by-kliponius
 * http://openclipart.org/detail/28703/cog-cogwheel-gear-zahnrad-by-qubodup
+
+The included test/bin/spectool is licensed under GPLv2 and can be obtained from http://people.redhat.com/nphilipp/spectool/

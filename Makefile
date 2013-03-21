@@ -1,16 +1,40 @@
-TOPLEVEL := svn2rpm svn2rpm.spec
+TOPLEVEL := svn2rpm svn2rpm.spec Makefile DEBIAN test
+
+TESTTEMP := $(CURDIR)/test/temp
+TESTOUT := $(TESTTEMP)/out
+SVNDIR := $(TESTTEMP)/svn
+SVNURL := file://$(SVNDIR)
+
 GITREV := HEAD
 
 VERSION := $(shell cat VERSION 2>/dev/null)
 REVISION := "$(shell git rev-list $(GITREV) -- $(TOPLEVEL) 2>/dev/null| wc -l)$(EXTRAREV)"
 PV = svn2rpm-$(VERSION)
 
-.PHONY: all deb srpm clean rpm info debinfo rpminfo
+# we bring a copy of spectool as this is not available on Debian systems and only a Perl script
+PATH := $(PATH):$(CURDIR)/test/bin
+
+.PHONY: all test deb srpm clean rpm info debinfo rpminfo
 
 all: deb rpm
 	ls -l dist/*.deb dist/*.rpm
 
-deb: clean
+test: clean
+	@echo "Building Version $(VERSION) Revision $(REVISION)"
+	mkdir -p $(TESTOUT) $(SVNDIR)
+	svnadmin create $(SVNDIR)
+	svn import test/data $(SVNURL) -m import
+	# variant 1 no download
+	./svn2rpm -o $(TESTOUT) $(SVNURL)/test1
+	rpm -qp $(TESTOUT)/test1-19-75.1.noarch.rpm
+	# variant 1 with download
+	./svn2rpm -o $(TESTOUT) $(SVNURL)/test2
+	rpm -qp $(TESTOUT)/test2-19-75.1.noarch.rpm
+	# variant 2
+	./svn2rpm -o $(TESTOUT) $(SVNURL)/test3
+	rpm -qp $(TESTOUT)/test3-19-75.1.noarch.rpm
+
+deb: test
 	mkdir -p dist build/deb/usr/bin build/deb/usr/share/doc/svn2rpm build/deb/usr/share/lintian/overrides build/deb/DEBIAN
 	install -m 0755 svn2rpm build/deb/usr/bin/svn2rpm
 	install -m 0644 DEBIAN/* build/deb/DEBIAN
@@ -23,7 +47,7 @@ deb: clean
 	fakeroot dpkg -b build/deb dist
 	lintian --quiet -i dist/*deb
 
-srpm: clean
+srpm: test
 	mkdir -p dist build/$(PV) build/BUILD
 	cp -r $(TOPLEVEL) Makefile build/$(PV)
 	mv build/$(PV)/*.spec build/
@@ -35,7 +59,13 @@ srpm: clean
 rpm: srpm
 	ln -svf ../dist build/noarch
 	rpmbuild --nodeps --define="_topdir $(CURDIR)/build" --define="_rpmdir %{_topdir}" --rebuild $(CURDIR)/dist/*.src.rpm
-	echo -e '\n\n\n\n\nWARNING! THIS RPM IS NOT INTENDED FOR PRODUCTION USE. PLEASE USE rpmbuild --rebuild dist/*.src.rpm TO CREATE A PRODUCTION RPM PACKAGE!\n\n\n\n\n'
+	@echo
+	@echo
+	@echo
+	@echo 'WARNING! THIS RPM IS NOT INTENDED FOR PRODUCTION USE. PLEASE USE rpmbuild --rebuild dist/*.src.rpm TO CREATE A PRODUCTION RPM PACKAGE!'
+	@echo
+	@echo
+	@echo
 
 info: rpminfo debinfo
 
@@ -53,7 +83,7 @@ rpmrepo: rpm
 	repoclient uploadto "$(TARGET_REPO)" dist/*.rpm
 
 clean:
-	rm -Rf dist/*.rpm dist/*.deb build
+	rm -Rf dist/*.rpm dist/*.deb build test/temp
 
 # todo: create debian/RPM changelog automatically, e.g. with git-dch --full --id-length=10 --ignore-regex '^fixes$' -S -s 68809505c5dea13ba18a8f517e82aa4f74d79acb src doc *.spec
 

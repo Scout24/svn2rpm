@@ -9,6 +9,8 @@ Create RPM packages from SVN repository. The source files can be stored in 2 var
 
 The 2nd variant is especially useful for simple packages that just deploy a few files. The user sees the files in the SVN source location and only needs to write a few shell lines to put the files into the proper place. No hassle with packing archives, this is all abstracted away by svn2rpm.
 
+Check out the stuff in test/data to see some examples for working spec files/configurations.
+
 Usage
 =====
 ```
