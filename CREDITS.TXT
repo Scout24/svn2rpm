@@ -1,0 +1,14 @@
+The following people contributed to svn2rpm:
+* Schlomo Schapiro
+* Ralph Angenendt
+* Sebastian Herold
+* Kay Vogelgesang
+* Andre von Deetzen
+* Stefan Birkner
+* Alexander Metzner
+* Brian Wiborg
+* Christian Requena
+
+The logo is based on these public cliparts:
+* http://openclipart.org/detail/26101/cardboard-box-/-package-by-kliponius
+* http://openclipart.org/detail/28703/cog-cogwheel-gear-zahnrad-by-qubodup
