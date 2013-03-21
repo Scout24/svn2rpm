@@ -43,9 +43,13 @@ Note: The RPM package name and version are taken from the SPEC file!!
 For VARIANT 1 the sources will be downloaded with spectool.
 ```
 
+Building
+========
+
+Run `make` to create DEB and RPM packages. The `make test` will need a working Internet connection and access to GitHub via HTTP as it downloads a file from GitHub to test the download feature. It should autodetect your proxy and use it.
+
 TODO
 ====
 
-* Add some tests
 * Really detect the variant that is beeing used instead of trying both
 * Better error reporting
