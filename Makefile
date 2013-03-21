@@ -20,19 +20,36 @@ all: deb rpm
 	ls -l dist/*.deb dist/*.rpm
 
 test: clean
+	@echo
 	@echo "Building Version $(VERSION) Revision $(REVISION)"
+	@echo
 	mkdir -p $(TESTOUT) $(SVNDIR)
 	svnadmin create $(SVNDIR)
 	svn import test/data $(SVNURL) -m import
-	# variant 1 no download
-	./svn2rpm -o $(TESTOUT) $(SVNURL)/test1
-	rpm -qp $(TESTOUT)/test1-19-75.1.noarch.rpm
-	# variant 1 with download
+	@echo
+	@echo "TEST variant 1 no download"
+	./svn2rpm -b .great -o $(TESTOUT) $(SVNURL)/test1
+	rpm -qp $(TESTOUT)/test1-19-75.1.great.noarch.rpm
+	@echo
+	@echo "TEST variant 1 with download only source rpm"
+	./svn2rpm -s -o $(TESTOUT) $(SVNURL)/test2
+	rpm -qp $(TESTOUT)/test2-19-75.1.src.rpm
+	test ! -f $(TESTOUT)/test2-19-75.1.noarch.rpm
+	@echo
+	@echo "TEST variant 1 with download"
 	./svn2rpm -o $(TESTOUT) $(SVNURL)/test2
 	rpm -qp $(TESTOUT)/test2-19-75.1.noarch.rpm
-	# variant 2
+	@echo
+	@echo "TEST variant 2 only source rpm"
+	./svn2rpm -s -o $(TESTOUT) $(SVNURL)/test3
+	rpm -qp $(TESTOUT)/test3-19-75.1.src.rpm
+	test ! -f $(TESTOUT)/test3-19-75.1.noarch.rpm
+	@echo
+	@echo "TEST variant 2"
 	./svn2rpm -o $(TESTOUT) $(SVNURL)/test3
 	rpm -qp $(TESTOUT)/test3-19-75.1.noarch.rpm
+	@echo
+
 
 deb: test
 	mkdir -p dist build/deb/usr/bin build/deb/usr/share/doc/svn2rpm build/deb/usr/share/lintian/overrides build/deb/DEBIAN
