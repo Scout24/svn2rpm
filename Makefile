@@ -49,7 +49,7 @@ debrepo: deb
 	/data/mnt/is24-ubuntu-repo/putinrepo.sh dist/*.deb
 
 rpmrepo: rpm
-	echo "##teamcity[buildStatus text='{build.status.text} RPM Version $(rpm -qp dist/*src.rpm --queryformat "%%{VERSION}-%%{RELEASE}")']"
+	echo "##teamcity[buildStatus text='{build.status.text} RPM Version $(shell rpm -qp dist/*src.rpm --queryformat "%{VERSION}-%{RELEASE}")']"
 	repoclient uploadto "$(TARGET_REPO)" dist/*.rpm
 
 clean:
