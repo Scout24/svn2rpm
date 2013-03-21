@@ -1,5 +1,6 @@
 svn2rpm
 =======
+![Logo](https://raw.github.com/ImmobilienScout24/svn2rpm/master/svn2rpm-small.png)
 
 Create RPM packages from SVN repository. The source files can be stored in 2 variants:
 
