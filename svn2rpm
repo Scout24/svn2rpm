@@ -1,0 +1,185 @@
+#!/bin/bash
+# export a dir from SVN and build an RPM from it
+VERSION='__VERSION__'
+PROGRAM="$(basename $(readlink -f "$0"))"
+function usage {
+cat <<EOF
+$PROGRAM $VERSION
+Export from SVN and build an SRC RPM package. Requirements:
+- SPEC file must be part of files checked out from SVN
+- VARIANT 1: SVN contains SPEC file and optionally SOURCES
+- VARIANT 2: SVN is exploded SOURCE0
+
+Usage:
+
+$PROGRAM [Options ...] <SVN URL|WORKING COPY PATH> [more rpmbuild parameters ...]
+
+Options:
+    -V          Version
+    -h          Show help
+    -s          Build only Source RPM
+    -k          Keep work area (to debug RPM build issues)
+    -d          Debug mode
+    -b <tag>    Append tag to Release:
+    -o <path>   Write resulting RPMs to path
+
+Example:
+$PROGRAM <svn url> 
+$PROGRAM -b .is24 <working copy path>
+$PROGRAM <svn|wc> --define="key value"
+
+Note: The RPM package name and version are taken from the SPEC file!!
+
+For VARIANT 1 the sources will be downloaded with spectool.
+EOF
+exit 1
+}
+
+# make sure we speak English
+export LANG=C LC_ALL=C
+
+function die {
+    EXIT_MESSAGE="ERROR: $@"
+    echo "$EXIT_MESSAGE"
+	KEEPWORKDIR=1
+	exit 1
+}
+
+function exittrap {
+	if test "$KEEPWORKDIR" -a -s "$WORK/log.txt" ; then
+		sed -e 's/^/LOG: /' "$WORK/log.txt"
+	fi
+    [[ "$EXIT_MESSAGE" ]] && echo "$EXIT_MESSAGE" 1>&2
+	${KEEPWORKDIR:+echo Do not forget to} rm -Rf "$WORK"
+}
+
+# Parse options
+OPTS="$(getopt -n $PROGRAM -o "hVskdb:o:" -l "help,version" -- "$@")"
+if (( $? != 0 )); then
+    echo 1>&2 "Try '$PROGRAM --help' for more information."
+    exit 1
+fi
+
+BUILDNR=
+DEBUG=
+RPMBUILD_TARGET="a"
+RESULT_DIR=$(pwd)
+# default rpmbuild options make sure that we build RHEL5-compatible even when on RHEL>5
+RPMBUILD_OPTIONS=( --define="_binary_payload w9.bzdio" --define="_source_filedigest_algorithm md5" --define="_binary_filedigest_algorithm md5" )
+eval set -- "$OPTS"
+while true; do
+    case "$1" in
+        (-h|--help) usage ;;
+        (-V|--version) echo "$PROGRAM $VERSION"; exit 0 ;;
+        (-s) 
+            RPMBUILD_TARGET="s"
+            RPMBUILD_OPTIONS=( "${RPMBUILD_OPTIONS[@]}" --nodeps ) # ignore BuildRequires if only doing src.rpm
+            ;;
+        (-k) KEEPWORKDIR=1 ;;
+        (-d) DEBUG=1 ;;
+        (-b) BUILDNR="$2"; shift ;;
+        (-o) RESULT_DIR="$(readlink -f "$2")"; shift ;;
+        (--) shift; break;;
+        (-*)
+            echo 1>&2 "$PROGRAM: unrecognized option '$option'"
+            echo 1>&2 "Try '$PROGRAM --help' for more information."
+            exit 1
+            ;;
+        (*) break;;
+    esac
+    shift
+done
+
+[[ "$DEBUG" ]] && set -x
+if [[ ! "$1" ]] ; then
+    die "Required argument missing."
+fi
+SVN="$1" ; shift
+export TMPDIR=${TMPDIR:-/data/tmp}
+WORK="$(mktemp -d -t "$(basename $0)"-XXXXXXXXXX)"
+# KEEPWORKDIR can be set externally to keep the work dir. Else it is empty by default.
+trap "exittrap" 0
+
+RPMBUILD_OPTIONS=( "${RPMBUILD_OPTIONS[@]}" --define="_topdir $WORK/rpmbuild" )
+
+# export content from SVN or Working Copy. Make sure that working copy is up to date
+if ! [[ "$SVN" = *://* ]] ; then
+	echo Updating working copy
+	svn update --no-auth-cache "$SVN" >> "$WORK"/log.txt 2>&1
+	
+fi
+
+# get SVN rev for URL
+REV="$(svn log --xml -l 1 "$SVN" | grep revision= | tr -d 'revision=" >')" >> "$WORK"/log.txt 2>&1 || die "Could not determine SVN revision"
+# make sure there is a REV
+if ! [ "$REV" ] ; then
+	REV=0
+fi
+
+svn export --no-auth-cache "$SVN" "$WORK/export" >> "$WORK"/log.txt 2>&1 || die "SVN export failed"
+
+# find spec files in content
+SPECFILE=( $(find "$WORK/export" -maxdepth 1 -type f -name \*.spec) ) >> "$WORK"/log.txt 2>&1 || die "Could not search for spec files"
+if test "${#SPECFILE[@]}" -ne 1 ; then
+	# make sure that there is exactly 1 spec file in the tar.gz. Everything else (0 or more than 1) is an error.
+	die "There is not exactly 1 spec file (${SPECFILE[@]})"
+fi
+
+# patch rev into spec file
+sed -i -e "s/^\(Release:[\t ]\+[^%]\+\)/\1.$REV$BUILDNR/" "$SPECFILE" || die "Could not patch REV into '$SPECFILE'"
+
+# get package name and version from spec file
+PACKAGE_NAME="$( sed -ne '/Name:/{s/.*:[\t ]\+\(.*\)/\1/;P}' "$SPECFILE" )"
+PACKAGE_VERSION="$( sed -ne '/Version:/{s/.*:[\t ]\+\(.*\)/\1/;P}' "$SPECFILE" )"
+PACKAGE="$PACKAGE_NAME-$PACKAGE_VERSION"
+test "$PACKAGE" = "-" && die "Could not determine correct package name and version from SPEC file (got $PACKAGE)"
+
+# make sure that SPEC file has a canonical name
+[[ "${SPECFILE##*/}" == "$PACKAGE_NAME.spec" ]] || die "SPEC file is not '$PACKAGE_NAME.spec' but '${SPECFILE##*/}'"
+
+# prepare rpm build environment
+mkdir -p "$WORK"/rpmbuild/{SPECS,SOURCES,BUILD,RPMS} >> "$WORK"/log.txt 2>&1
+
+# make sure result dir exists
+mkdir -p "$RESULT_DIR"
+
+# symlink output dirs to CWD to skip extra copy of files
+for d in RPMS/noarch RPMS/x86_64 RPMS/i386 RPMS/i486 RPMS/i586 RPMS/i686 SRPMS ; do
+    ln -svf "$RESULT_DIR" "$WORK"/rpmbuild/$d >> "$WORK"/log.txt 2>&1
+done
+
+# move export dir to correct package name-version
+mv -v "$WORK/export" "$WORK/$PACKAGE" >> "$WORK"/log.txt 2>&1 || die "Could not move '$WORK/export' to '$WORK/$PACKAGE'"
+
+SPECFILE="${SPECFILE/export/$PACKAGE}" # change spec file path after moving and convert from array to string
+# link spec file to correct location
+ln -svf "$SPECFILE" "$WORK/rpmbuild/SPECS/$PACKAGE_NAME.spec" >> "$WORK"/log.txt 2>&1
+
+# variant 1: we have spec files and source files together, spec file already linked to SPECS, we use SVN exported package dir as RPMbuild sourcedir
+echo "VARIANT 1: SPEC file and SOURCES together" >> "$WORK/log.txt"
+# download sources if spectool available. spectool will do nothing if there are no URLs given
+if type -p spectool &>/dev/null ; then
+    spectool -C "$WORK/$PACKAGE" -g "$WORK/rpmbuild/SPECS/$PACKAGE_NAME.spec" >> "$WORK"/log.txt 2>&1
+fi
+if rpmbuild "${RPMBUILD_OPTIONS[@]}" --define="_sourcedir $WORK/$PACKAGE" "$@" -b$RPMBUILD_TARGET "$WORK/rpmbuild/SPECS/$PACKAGE_NAME.spec" >> "$WORK/log.txt" 2>&1 ; then
+    # nothing else to do
+    :
+else
+    # variant 2: the svn URL is the exploded source, pack it before running rpmbuild
+    echo -e "WARNING: VARIANT 1 did not work, trying\nVARIANT 2: the SVN uri or working copy is the exploded SOURCE" >> "$WORK/log.txt"
+    tar -cvzf "$WORK/rpmbuild/SOURCES/$PACKAGE".tar.gz -C "$WORK" "$PACKAGE" >> "$WORK"/log.txt 2>&1 || die "Could not pack '$WORK/$PACKAGE' to '$WORK/rpmbuild/SOURCES/$PACKAGE.tar.gz'"
+    rpmbuild "${RPMBUILD_OPTIONS[@]}" "$@" -b$RPMBUILD_TARGET "$WORK/rpmbuild/SPECS/$PACKAGE_NAME.spec" >> "$WORK/log.txt" 2>&1 || die "Could not build RPM with Variant 2, you must figure out yourself if Variant 1 should have worked."
+fi
+
+# Parse our log to find out which files where created
+RESULT_FILES=( $(sed -n -e "/^Wrote:.*\.rpm/s#^.*/##p" "$WORK/log.txt") )
+
+# handle the case if there is no result. Should be handled by the || die above but just in case ...
+if test "$RESULT_FILES" ; then
+	echo "Created the following RPM files in $RESULT_DIR:"
+	for f in "${RESULT_FILES[@]}" ; do
+		echo "  $f"
+	done
+else
+	die "No RPMs were created"
+fi
