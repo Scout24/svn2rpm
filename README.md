@@ -1,6 +1,6 @@
 svn2rpm
 =======
-![Logo](http://i.imgur.com/DQ0wWjR.png)
+![Logo](http://i.imgur.com/NWBidnZ.png)
 
 Create RPM packages from SVN repository. The source files can be stored in 2 variants:
 
