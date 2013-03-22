@@ -10,8 +10,8 @@ URL: https://github.com/ImmobilienScout24/svn2rpm
 # then you could either put the tar.gz next to this spec file or have svn2rpm
 # download it (if spectool is available)
 Source0: file1.txt
-# download our logo for testing
-Source1: http://raw.github.com/ImmobilienScout24/svn2rpm/master/svn2rpm.png
+# download our logo for testing, hosted in imgur because github forces all requests to HTTPS which can lead to wget / SSL errors
+Source1: http://i.imgur.com/NWBidnZ.png
 BuildRoot:  %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 BuildArch: noarch
 
