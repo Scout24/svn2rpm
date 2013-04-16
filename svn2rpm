@@ -126,11 +126,11 @@ if test "${#SPECFILE[@]}" -ne 1 ; then
 fi
 
 # patch rev into spec file
-sed -i -e "s/^\(Release:[\t ]\+[^%]\+\)/\1.$REV$BUILDNR/" "$SPECFILE" || die "Could not patch REV into '$SPECFILE'"
+sed -i -e "s/^\(Release[\t ]\?:[\t ]\+[^%]\+\)/\1.$REV$BUILDNR/" "$SPECFILE" || die "Could not patch REV into '$SPECFILE'"
 
 # get package name and version from spec file
-PACKAGE_NAME="$( sed -ne '/Name:/{s/.*:[\t ]\+\(.*\)/\1/;P}' "$SPECFILE" )"
-PACKAGE_VERSION="$( sed -ne '/Version:/{s/.*:[\t ]\+\(.*\)/\1/;P}' "$SPECFILE" )"
+PACKAGE_NAME="$( sed -ne '/Name[\t ]\?:/{s/.*:[\t ]\+\(.*\)/\1/;P}' "$SPECFILE" )"
+PACKAGE_VERSION="$( sed -ne '/Version[\t ]\?:/{s/.*:[\t ]\+\(.*\)/\1/;P}' "$SPECFILE" )"
 PACKAGE="$PACKAGE_NAME-$PACKAGE_VERSION"
 test "$PACKAGE" = "-" && die "Could not determine correct package name and version from SPEC file (got $PACKAGE)"
 
