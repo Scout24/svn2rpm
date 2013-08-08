@@ -1,6 +1,6 @@
 #!/bin/bash
 # export a dir from SVN and build an RPM from it
-VERSION='2013-08-06'
+VERSION='__VERSION__'
 PROGRAM="$(basename $(readlink -f "$0"))"
 function usage {
 cat <<EOF
