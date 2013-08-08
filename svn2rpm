@@ -1,6 +1,6 @@
 #!/bin/bash
 # export a dir from SVN and build an RPM from it
-VERSION='__VERSION__'
+VERSION='2013-08-06'
 PROGRAM="$(basename $(readlink -f "$0"))"
 function usage {
 cat <<EOF
@@ -18,6 +18,7 @@ Options:
     -V          Version
     -h          Show help
     -s          Build only Source RPM
+    -r <rev>    Use SVN Revision rev instead of HEAD
     -k          Keep work area (to debug RPM build issues)
     -d          Debug mode
     -b <tag>    Append tag to Release:
@@ -26,6 +27,7 @@ Options:
 Example:
 $PROGRAM <svn url> 
 $PROGRAM -b .is24 <working copy path>
+$PROGRAM -r 123 -b .is24 <working copy path>
 $PROGRAM <svn|wc> --define="key value"
 
 Note: The RPM package name and version are taken from the SPEC file!!
@@ -54,7 +56,7 @@ function exittrap {
 }
 
 # Parse options
-OPTS="$(getopt -n $PROGRAM -o "hVskdb:o:" -l "help,version" -- "$@")"
+OPTS="$(getopt -n $PROGRAM -o "hVskdr:b:o:" -l "help,version" -- "$@")"
 if (( $? != 0 )); then
     echo 1>&2 "Try '$PROGRAM --help' for more information."
     exit 1
@@ -62,6 +64,7 @@ fi
 
 BUILDNR=
 DEBUG=
+SVNREV=HEAD
 RPMBUILD_TARGET="a"
 RESULT_DIR=$(pwd)
 # default rpmbuild options make sure that we build RHEL5-compatible even when on RHEL>5
@@ -77,6 +80,7 @@ while true; do
             ;;
         (-k) KEEPWORKDIR=1 ;;
         (-d) DEBUG=1 ;;
+        (-r) SVNREV="$2"; shift;;
         (-b) BUILDNR="$2"; shift ;;
         (-o) RESULT_DIR="$(readlink -f "$2")"; shift ;;
         (--) shift; break;;
@@ -105,18 +109,18 @@ RPMBUILD_OPTIONS=( "${RPMBUILD_OPTIONS[@]}" --define="_topdir $WORK/rpmbuild" )
 # export content from SVN or Working Copy. Make sure that working copy is up to date
 if ! [[ "$SVN" = *://* ]] ; then
 	echo Updating working copy
-	svn update --no-auth-cache "$SVN" >> "$WORK"/log.txt 2>&1
+	svn update -r "$SVNREV" --no-auth-cache "$SVN" >> "$WORK"/log.txt 2>&1
 	
 fi
 
 # get SVN rev for URL
-REV="$(svn log --xml -l 1 "$SVN" | grep revision= | tr -d 'revision=" >')" >> "$WORK"/log.txt 2>&1 || die "Could not determine SVN revision"
+REV="$(svn log -r "$SVNREV" --xml -l 1 "$SVN" | grep revision= | tr -d 'revision=" >')" >> "$WORK"/log.txt 2>&1 || die "Could not determine SVN revision"
 # make sure there is a REV
 if ! [ "$REV" ] ; then
 	REV=0
 fi
 
-svn export --no-auth-cache "$SVN" "$WORK/export" >> "$WORK"/log.txt 2>&1 || die "SVN export failed"
+svn export -r "$SVNREV" --no-auth-cache "$SVN" "$WORK/export" >> "$WORK"/log.txt 2>&1 || die "SVN export failed"
 
 # find spec files in content
 SPECFILE=( $(find "$WORK/export" -maxdepth 1 -type f -name \*.spec) ) >> "$WORK"/log.txt 2>&1 || die "Could not search for spec files"
@@ -126,11 +130,11 @@ if test "${#SPECFILE[@]}" -ne 1 ; then
 fi
 
 # patch rev into spec file
-sed -i -e "s/^\(Release[\t ]\?:[\t ]\+[^%]\+\)/\1.$REV$BUILDNR/" "$SPECFILE" || die "Could not patch REV into '$SPECFILE'"
+sed -i -e "s/^\(Release:[\t ]\+[^%]\+\)/\1.$REV$BUILDNR/" "$SPECFILE" || die "Could not patch REV into '$SPECFILE'"
 
 # get package name and version from spec file
-PACKAGE_NAME="$( sed -ne '/Name[\t ]\?:/{s/.*:[\t ]\+\(.*\)/\1/;P}' "$SPECFILE" )"
-PACKAGE_VERSION="$( sed -ne '/Version[\t ]\?:/{s/.*:[\t ]\+\(.*\)/\1/;P}' "$SPECFILE" )"
+PACKAGE_NAME="$( sed -ne '/Name:/{s/.*:[\t ]\+\(.*\)/\1/;P}' "$SPECFILE" )"
+PACKAGE_VERSION="$( sed -ne '/Version:/{s/.*:[\t ]\+\(.*\)/\1/;P}' "$SPECFILE" )"
 PACKAGE="$PACKAGE_NAME-$PACKAGE_VERSION"
 test "$PACKAGE" = "-" && die "Could not determine correct package name and version from SPEC file (got $PACKAGE)"
 

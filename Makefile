@@ -3,12 +3,13 @@ TOPLEVEL := svn2rpm svn2rpm.spec Makefile DEBIAN test
 TESTTEMP := $(CURDIR)/test/temp
 TESTOUT := $(TESTTEMP)/out
 SVNDIR := $(TESTTEMP)/svn
+SVNWC := $(TESTTEMP)/wc
 SVNURL := file://$(SVNDIR)
 
 GITREV := HEAD
 
-VERSION := $(shell cat VERSION 2>/dev/null)
 REVISION := "$(shell git rev-list $(GITREV) -- $(TOPLEVEL) 2>/dev/null| wc -l)$(EXTRAREV)"
+VERSION := $(shell cat VERSION 2>/dev/null).$(REVISION)
 PV = svn2rpm-$(VERSION)
 
 # we bring a copy of spectool as this is not available on Debian systems and only a Perl script
@@ -23,40 +24,61 @@ test: clean
 	@echo
 	@echo "Building Version $(VERSION) Revision $(REVISION)"
 	@echo
+	@echo "Preparing Tests"
 	mkdir -p $(TESTOUT) $(SVNDIR)
 	svnadmin create $(SVNDIR)
 	svn import test/data $(SVNURL) -m import
 	@echo
-	@echo "TEST variant 1 no download"
+	@echo "TEST from SVNURL variant 1 no download"
+	rm -f $(TESTOUT)/test1-19-75.1.great.noarch.rpm
 	./svn2rpm -b .great -o $(TESTOUT) $(SVNURL)/test1
 	rpm -qp $(TESTOUT)/test1-19-75.1.great.noarch.rpm
 	@echo
-	@echo "TEST variant 1 with download only source rpm"
+	@echo "TEST from SVNURL variant 1 with download only source rpm"
+	rm -f $(TESTOUT)/test2-19-75.1.noarch.rpm $(TESTOUT)/test2-19-75.1.noarch.rpm
 	./svn2rpm -s -o $(TESTOUT) $(SVNURL)/test2
 	rpm -qp $(TESTOUT)/test2-19-75.1.src.rpm
 	test ! -f $(TESTOUT)/test2-19-75.1.noarch.rpm
 	@echo
-	@echo "TEST variant 1 with download"
+	@echo "TEST from SVNURL variant 1 with download"
+	rm -f $(TESTOUT)/test2-19-75.1.noarch.rpm
 	./svn2rpm -o $(TESTOUT) $(SVNURL)/test2
 	rpm -qp $(TESTOUT)/test2-19-75.1.noarch.rpm
 	@echo
-	@echo "TEST variant 2 only source rpm"
+	@echo "TEST from SVNURL variant 2 only source rpm"
+	rm -f $(TESTOUT)/test3-19-75.1.src.rpm $(TESTOUT)/test3-19-75.1.noarch.rpm
 	./svn2rpm -s -o $(TESTOUT) $(SVNURL)/test3
 	rpm -qp $(TESTOUT)/test3-19-75.1.src.rpm
 	test ! -f $(TESTOUT)/test3-19-75.1.noarch.rpm
 	@echo
-	@echo "TEST variant 2"
+	@echo "TEST from SVNURL variant 2"
+	rm -f $(TESTOUT)/test3-19-75.1.noarch.rpm
 	./svn2rpm -o $(TESTOUT) $(SVNURL)/test3
 	rpm -qp $(TESTOUT)/test3-19-75.1.noarch.rpm
 	@echo
+	@echo "TEST from SVNURL variant 2 only source rpm old revision"
+	rm -f $(TESTOUT)/test3-19-75.1.src.rpm $(TESTOUT)/test3-19-75.1.noarch.rpm
+	svn mkdir $(SVNURL)/test3/newdir -m newrev
+	./svn2rpm -r 1 -s -o $(TESTOUT) $(SVNURL)/test3
+	rpm -qp $(TESTOUT)/test3-19-75.1.src.rpm
+	test ! -f $(TESTOUT)/test3-19-75.1.noarch.rpm
+	@echo
+	@echo "TEST from SVN-WC variant 2 only source rpm old revision"
+	svn co $(SVNURL)/test3 $(SVNWC)
+	rm -f $(TESTOUT)/test3-19-75.1.src.rpm $(TESTOUT)/test3-19-75.1.noarch.rpm
+	./svn2rpm -r 1 -s -o $(TESTOUT) $(SVNWC)
+	rpm -qp $(TESTOUT)/test3-19-75.1.src.rpm
+	test ! -f $(TESTOUT)/test3-19-75.1.noarch.rpm
+	@echo
+   
 
 
 deb: test
 	mkdir -p dist build/deb/usr/bin build/deb/usr/share/doc/svn2rpm build/deb/usr/share/lintian/overrides build/deb/DEBIAN
 	install -m 0755 svn2rpm build/deb/usr/bin/svn2rpm
 	install -m 0644 DEBIAN/* build/deb/DEBIAN
-	sed -i -e s/__VERSION__/$(VERSION).$(REVISION)/ build/deb/usr/bin/svn2rpm
-	sed -i -e s/__VERSION__/$(VERSION).$(REVISION)/ build/deb/DEBIAN/control
+	sed -i -e s/__VERSION__/$(VERSION)/ build/deb/usr/bin/svn2rpm
+	sed -i -e s/__VERSION__/$(VERSION)/ build/deb/DEBIAN/control
 	mv build/deb/DEBIAN/copyright build/deb/usr/share/doc/svn2rpm/copyright
 	mv build/deb/DEBIAN/overrides build/deb/usr/share/lintian/overrides/svn2rpm
 	chmod -R go-w build # remove group writeable in case you have it in your umask
@@ -68,8 +90,8 @@ srpm: test
 	mkdir -p dist build/$(PV) build/BUILD
 	cp -r $(TOPLEVEL) Makefile build/$(PV)
 	mv build/$(PV)/*.spec build/
-	sed -i -e s/__VERSION__/$(VERSION)/ -e /^Release/s/$$/.$(REVISION)/ build/*.spec
-	sed -i -e s/__VERSION__/$(VERSION).$(REVISION)/ build/$(PV)/svn2rpm
+	sed -i -e s/__VERSION__/$(VERSION)/ build/*.spec
+	sed -i -e s/__VERSION__/$(VERSION)/ build/$(PV)/svn2rpm
 	tar -czf build/$(PV).tar.gz -C build $(PV)
 	rpmbuild --define="_topdir $(CURDIR)/build" --define="_sourcedir $(CURDIR)/build" --define="_srcrpmdir $(CURDIR)/dist" --nodeps -bs build/*.spec
 
