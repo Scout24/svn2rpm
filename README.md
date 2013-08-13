@@ -16,7 +16,7 @@ The intention of this tool is to give the user a very easy way to automatically 
 Usage
 =====
 ```
-svn2rpm 10.1.3
+svn2rpm 12.10
 Export from SVN and build an SRC RPM package. Requirements:
 - SPEC file must be part of files checked out from SVN
 - VARIANT 1: SVN contains SPEC file and optionally SOURCES
@@ -30,6 +30,7 @@ Options:
     -V          Version
     -h          Show help
     -s          Build only Source RPM
+    -r <rev>    Use SVN Revision rev instead of HEAD
     -k          Keep work area (to debug RPM build issues)
     -d          Debug mode
     -b <tag>    Append tag to Release:
@@ -38,6 +39,7 @@ Options:
 Example:
 svn2rpm <svn url> 
 svn2rpm -b .is24 <working copy path>
+svn2rpm -r 123 -b .is24 <working copy path>
 svn2rpm <svn|wc> --define="key value"
 
 Note: The RPM package name and version are taken from the SPEC file!!
