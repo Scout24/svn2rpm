@@ -64,7 +64,10 @@ fi
 
 BUILDNR=
 DEBUG=
-SVNREV=HEAD
+# NOTE: SVNREV also contains -r so that the parameter disappears completely if no revision given. Default is empty
+#       We need this to build RPMs from a working copy with local changes and to correctly extract
+#       the revision from SVN URLs (apparently the last is only an issue with some svn versions, hence no test here)
+SVNREV=
 RPMBUILD_TARGET="a"
 RESULT_DIR=$(pwd)
 # default rpmbuild options make sure that we build RHEL5-compatible even when on RHEL>5
@@ -80,7 +83,7 @@ while true; do
             ;;
         (-k) KEEPWORKDIR=1 ;;
         (-d) DEBUG=1 ;;
-        (-r) SVNREV="$2"; shift;;
+        (-r) SVNREV="-r $2"; shift;;
         (-b) BUILDNR="$2"; shift ;;
         (-o) RESULT_DIR="$(readlink -f "$2")"; shift ;;
         (--) shift; break;;
@@ -109,18 +112,18 @@ RPMBUILD_OPTIONS=( "${RPMBUILD_OPTIONS[@]}" --define="_topdir $WORK/rpmbuild" )
 # export content from SVN or Working Copy. Make sure that working copy is up to date
 if ! [[ "$SVN" = *://* ]] ; then
 	echo Updating working copy
-	svn update -r "$SVNREV" --no-auth-cache "$SVN" >> "$WORK"/log.txt 2>&1
+	svn update $SVNREV --no-auth-cache "$SVN" >> "$WORK"/log.txt 2>&1
 	
 fi
 
 # get SVN rev for URL
-REV="$(svn log -r "$SVNREV" --xml -l 1 "$SVN" | grep revision= | tr -d 'revision=" >')" >> "$WORK"/log.txt 2>&1 || die "Could not determine SVN revision"
+REV="$(svn log $SVNREV --xml -l 1 "$SVN" | grep revision= | tr -d 'revision=" >')" >> "$WORK"/log.txt 2>&1 || die "Could not determine SVN revision"
 # make sure there is a REV
 if ! [ "$REV" ] ; then
 	REV=0
 fi
 
-svn export -r "$SVNREV" --no-auth-cache "$SVN" "$WORK/export" >> "$WORK"/log.txt 2>&1 || die "SVN export failed"
+svn export $SVNREV --no-auth-cache "$SVN" "$WORK/export" >> "$WORK"/log.txt 2>&1 || die "SVN export failed"
 
 # find spec files in content
 SPECFILE=( $(find "$WORK/export" -maxdepth 1 -type f -name \*.spec) ) >> "$WORK"/log.txt 2>&1 || die "Could not search for spec files"

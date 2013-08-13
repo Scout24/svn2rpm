@@ -70,6 +70,14 @@ test: clean
 	rpm -qp $(TESTOUT)/test3-19-75.1.src.rpm
 	test ! -f $(TESTOUT)/test3-19-75.1.noarch.rpm
 	@echo
+	@echo "TEST from SVN-WC variant 2 only source rpm with local changes"
+	svn co $(SVNURL)/test3 $(SVNWC)
+	rm -f $(TESTOUT)/test3-99-75.2.src.rpm $(TESTOUT)/test3-99-75.2.noarch.rpm
+	sed -e 's/19$$/99/' -i $(SVNWC)/test3.spec # make local change that yields differen RPM name
+	./svn2rpm -s -o $(TESTOUT) $(SVNWC)
+	rpm -qp $(TESTOUT)/test3-99-75.2.src.rpm
+	test ! -f $(TESTOUT)/test3-99-75.2.noarch.rpm
+	@echo
    
 
 
