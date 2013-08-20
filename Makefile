@@ -8,7 +8,7 @@ SVNURL := file://$(SVNDIR)
 
 GITREV := HEAD
 
-REVISION := "$(shell git rev-list $(GITREV) -- $(TOPLEVEL) 2>/dev/null| wc -l)$(EXTRAREV)"
+REVISION := "$(shell git rev-list $(GITREV) -- $(TOPLEVEL) 2>/dev/null| wc -l)"
 VERSION := $(shell cat VERSION 2>/dev/null).$(REVISION)
 PV = svn2rpm-$(VERSION)
 
@@ -18,7 +18,7 @@ PATH := $(PATH):$(CURDIR)/test/bin
 .PHONY: all test deb srpm clean rpm info debinfo rpminfo
 
 all: deb rpm
-	ls -l dist/*.deb dist/*.rpm
+	ls -l dist/
 
 test: clean
 	@echo
@@ -94,14 +94,16 @@ deb: test
 	fakeroot dpkg -b build/deb dist
 	lintian --quiet -i dist/*deb
 
-srpm: test
+tgz: clean
 	mkdir -p dist build/$(PV) build/BUILD
 	cp -r $(TOPLEVEL) Makefile build/$(PV)
 	mv build/$(PV)/*.spec build/
-	sed -i -e s/__VERSION__/$(VERSION)/ build/*.spec
+	sed -i -e "s/__VERSION__/$(VERSION)/" -e "s/__EXTRAREV__/$(EXTRAREV)/" build/*.spec
 	sed -i -e s/__VERSION__/$(VERSION)/ build/$(PV)/svn2rpm
-	tar -czf build/$(PV).tar.gz -C build $(PV)
-	rpmbuild --define="_topdir $(CURDIR)/build" --define="_sourcedir $(CURDIR)/build" --define="_srcrpmdir $(CURDIR)/dist" --nodeps -bs build/*.spec
+	tar -czf dist/$(PV).tar.gz -C build $(PV)
+
+srpm: tgz
+	rpmbuild --define="_topdir $(CURDIR)/build" --define="_sourcedir $(CURDIR)/dist" --define="_srcrpmdir $(CURDIR)/dist" --nodeps -bs build/*.spec
 
 rpm: srpm
 	ln -svf ../dist build/noarch
@@ -130,7 +132,7 @@ rpmrepo: rpm
 	repoclient uploadto "$(TARGET_REPO)" dist/*.rpm
 
 clean:
-	rm -Rf dist/*.rpm dist/*.deb build test/temp
+	rm -Rf dist build test/temp
 
 # todo: create debian/RPM changelog automatically, e.g. with git-dch --full --id-length=10 --ignore-regex '^fixes$' -S -s 68809505c5dea13ba18a8f517e82aa4f74d79acb src doc *.spec
 

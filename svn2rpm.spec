@@ -1,6 +1,6 @@
 Name: svn2rpm
 Version: __VERSION__
-Release: 1
+Release: 1__EXTRAREV__
 Summary: Build RPMs from SVN
 Group: Applications/System
 License: GPL
@@ -10,6 +10,7 @@ BuildRoot:  %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 BuildArch: noarch
 Requires: rpmdevtools, rpm-build
 Requires: subversion
+BuildRequires: make, rpm-build, rpmdevtools
 
 %description
 Export from SVN and build an SRC RPM package. Requirements:
@@ -19,6 +20,9 @@ Export from SVN and build an SRC RPM package. Requirements:
 
 %prep
 %setup -q
+
+%build
+make test
 
 %install
 umask 0002
