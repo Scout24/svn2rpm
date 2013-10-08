@@ -106,6 +106,14 @@ test: clean
 	test ! -f $(TESTOUT)/test3-2-55.noarch.rpm
 	rm -R $(TESTOUT)/test3-2-55.src.rpm $(SVNWC)
 	@echo
+	@echo "TEST from SVN-WC variant 2 with version= 0 and release=0 and extra buildnr that has leading ."
+	svn co $(SVNURL)/test3 $(SVNWC)
+	sed -e 's/\(75\|19\)$$/0/' -i $(SVNWC)/test3.spec # set release and version to 0
+	./svn2rpm -s -b .55 -o $(TESTOUT) $(SVNWC)
+	rpm -qp $(TESTOUT)/test3-2-55.src.rpm
+	test ! -f $(TESTOUT)/test3-2-55.noarch.rpm
+	rm -R $(TESTOUT)/test3-2-55.src.rpm $(SVNWC)
+	@echo
   
 
 

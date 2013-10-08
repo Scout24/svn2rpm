@@ -146,6 +146,7 @@ fi
 if (( PACKAGE_RELEASE == 0 )) ; then
     # release 0 means put extra build info as release or leave at 0
     if [[ "$BUILDNR" ]] ; then
+        BUILDNR=${BUILDNR#.} # strip leading . from buildnr
         sed -i -e "s/^\(Release:[\t ]\+[^%]\+\)/Release: $BUILDNR/" "$SPECFILE" || die "Could not patch BUILDNR as Package Release into '$SPECFILE'"
     fi
 else
