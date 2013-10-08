@@ -29,39 +29,42 @@ test: clean
 	svnadmin create $(SVNDIR)
 	svn import test/data $(SVNURL) -m import
 	@echo
-	@echo "TEST from SVNURL variant 1 no download"
-	rm -f $(TESTOUT)/test1-19-75.1.great.noarch.rpm
+	@echo "TEST from SVNURL variant 1 no download with extra rev"
 	./svn2rpm -b .great -o $(TESTOUT) $(SVNURL)/test1
 	rpm -qp $(TESTOUT)/test1-19-75.1.great.noarch.rpm
+	rpm -qp $(TESTOUT)/test1-19-75.1.great.src.rpm
+	rm $(TESTOUT)/test1-19-75.1.great.noarch.rpm $(TESTOUT)/test1-19-75.1.great.src.rpm
 	@echo
 	@echo "TEST from SVNURL variant 1 with download only source rpm"
-	rm -f $(TESTOUT)/test2-19-75.1.noarch.rpm $(TESTOUT)/test2-19-75.1.noarch.rpm
 	./svn2rpm -s -o $(TESTOUT) $(SVNURL)/test2
 	rpm -qp $(TESTOUT)/test2-19-75.1.src.rpm
 	test ! -f $(TESTOUT)/test2-19-75.1.noarch.rpm
+	rm $(TESTOUT)/test2-19-75.1.src.rpm
 	@echo
 	@echo "TEST from SVNURL variant 1 with download"
-	rm -f $(TESTOUT)/test2-19-75.1.noarch.rpm
 	./svn2rpm -o $(TESTOUT) $(SVNURL)/test2
 	rpm -qp $(TESTOUT)/test2-19-75.1.noarch.rpm
+	rpm -qp $(TESTOUT)/test2-19-75.1.src.rpm
+	rm $(TESTOUT)/test2-19-75.1.noarch.rpm $(TESTOUT)/test2-19-75.1.src.rpm
 	@echo
 	@echo "TEST from SVNURL variant 2 only source rpm"
-	rm -f $(TESTOUT)/test3-19-75.1.src.rpm $(TESTOUT)/test3-19-75.1.noarch.rpm
 	./svn2rpm -s -o $(TESTOUT) $(SVNURL)/test3
 	rpm -qp $(TESTOUT)/test3-19-75.1.src.rpm
 	test ! -f $(TESTOUT)/test3-19-75.1.noarch.rpm
+	rm $(TESTOUT)/test3-19-75.1.src.rpm
 	@echo
 	@echo "TEST from SVNURL variant 2"
-	rm -f $(TESTOUT)/test3-19-75.1.noarch.rpm
 	./svn2rpm -o $(TESTOUT) $(SVNURL)/test3
 	rpm -qp $(TESTOUT)/test3-19-75.1.noarch.rpm
+	rpm -qp $(TESTOUT)/test3-19-75.1.src.rpm
+	rm $(TESTOUT)/test3-19-75.1.noarch.rpm $(TESTOUT)/test3-19-75.1.src.rpm
 	@echo
 	@echo "TEST from SVNURL variant 2 only source rpm old revision"
-	rm -f $(TESTOUT)/test3-19-75.1.src.rpm $(TESTOUT)/test3-19-75.1.noarch.rpm
 	svn mkdir $(SVNURL)/test3/newdir -m newrev
 	./svn2rpm -r 1 -s -o $(TESTOUT) $(SVNURL)/test3
 	rpm -qp $(TESTOUT)/test3-19-75.1.src.rpm
 	test ! -f $(TESTOUT)/test3-19-75.1.noarch.rpm
+	rm $(TESTOUT)/test3-19-75.1.src.rpm
 	@echo
 	@echo "TEST from SVN-WC variant 2 only source rpm old revision"
 	svn co $(SVNURL)/test3 $(SVNWC)
@@ -69,16 +72,41 @@ test: clean
 	./svn2rpm -r 1 -s -o $(TESTOUT) $(SVNWC)
 	rpm -qp $(TESTOUT)/test3-19-75.1.src.rpm
 	test ! -f $(TESTOUT)/test3-19-75.1.noarch.rpm
+	rm -R $(TESTOUT)/test3-19-75.1.src.rpm $(SVNWC)
 	@echo
 	@echo "TEST from SVN-WC variant 2 only source rpm with local changes"
 	svn co $(SVNURL)/test3 $(SVNWC)
-	rm -f $(TESTOUT)/test3-99-75.2.src.rpm $(TESTOUT)/test3-99-75.2.noarch.rpm
 	sed -e 's/19$$/99/' -i $(SVNWC)/test3.spec # make local change that yields differen RPM name
 	./svn2rpm -s -o $(TESTOUT) $(SVNWC)
 	rpm -qp $(TESTOUT)/test3-99-75.2.src.rpm
 	test ! -f $(TESTOUT)/test3-99-75.2.noarch.rpm
+	rm -R $(TESTOUT)/test3-99-75.2.src.rpm $(SVNWC)
 	@echo
-   
+	@echo "TEST from SVN-WC variant 2 with version=0"
+	svn co $(SVNURL)/test3 $(SVNWC)
+	sed -e 's/19$$/0/' -i $(SVNWC)/test3.spec # set version to 0
+	./svn2rpm -s -o $(TESTOUT) $(SVNWC)
+	rpm -qp $(TESTOUT)/test3-2-75.2.src.rpm
+	test ! -f $(TESTOUT)/test3-2-75.2.noarch.rpm
+	rm -R $(TESTOUT)/test3-2-75.2.src.rpm $(SVNWC)
+	@echo
+	@echo "TEST from SVN-WC variant 2 with release=0"
+	svn co $(SVNURL)/test3 $(SVNWC)
+	sed -e 's/75$$/0/' -i $(SVNWC)/test3.spec # set release to 0
+	./svn2rpm -s -o $(TESTOUT) $(SVNWC)
+	rpm -qp $(TESTOUT)/test3-19-0.src.rpm
+	test ! -f $(TESTOUT)/test3-19-0.noarch.rpm
+	rm -R $(TESTOUT)/test3-19-0.src.rpm $(SVNWC)
+	@echo
+	@echo "TEST from SVN-WC variant 2 with version= 0 and release=0 and extra buildnr"
+	svn co $(SVNURL)/test3 $(SVNWC)
+	sed -e 's/\(75\|19\)$$/0/' -i $(SVNWC)/test3.spec # set release and version to 0
+	./svn2rpm -s -b 55 -o $(TESTOUT) $(SVNWC)
+	rpm -qp $(TESTOUT)/test3-2-55.src.rpm
+	test ! -f $(TESTOUT)/test3-2-55.noarch.rpm
+	rm -R $(TESTOUT)/test3-2-55.src.rpm $(SVNWC)
+	@echo
+  
 
 
 deb: test
@@ -135,4 +163,4 @@ clean:
 	rm -Rf dist build test/temp
 
 # todo: create debian/RPM changelog automatically, e.g. with git-dch --full --id-length=10 --ignore-regex '^fixes$' -S -s 68809505c5dea13ba18a8f517e82aa4f74d79acb src doc *.spec
-
+# vim: ai:ts=4:sw=4:et!
