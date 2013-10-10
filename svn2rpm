@@ -135,15 +135,15 @@ fi
 # get package name and version from spec file
 PACKAGE_NAME="$( sed -ne '/Name:/{s/.*:[\t ]\+\(.*\)/\1/;P}' "$SPECFILE" )"
 PACKAGE_VERSION="$( sed -ne '/Version:/{s/.*:[\t ]\+\(.*\)/\1/;P}' "$SPECFILE" )"
-PACKAGE_RELEASE="$( sed -ne '/Release:/{s/.*:[\t ]\+\(.*\)/\1/;P}' "$SPECFILE" )"
+PACKAGE_SHORT_RELEASE="$( sed -ne '/Release:/{s/.*:[\t ]\+\([^%]*\)/\1/;P}' "$SPECFILE" )"
 
-if ((PACKAGE_VERSION == 0)) ; then
+if [[ "$PACKAGE_VERSION" == "0" ]] ; then
     # version 0 means put SVN Revision as version
     PACKAGE_VERSION=$REV
     sed -i -e "s/^\(Version:[\t ]\+[^%]\+\)/Version: $REV/" "$SPECFILE" || die "Could not patch REV as Package Version into '$SPECFILE'"
 fi
 
-if (( PACKAGE_RELEASE == 0 )) ; then
+if [[ "$PACKAGE_SHORT_RELEASE" == "0" ]] ; then
     # release 0 means put extra build info as release or leave at 0
     if [[ "$BUILDNR" ]] ; then
         BUILDNR=${BUILDNR#.} # strip leading . from buildnr

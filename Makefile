@@ -29,36 +29,42 @@ test: clean
 	svnadmin create $(SVNDIR)
 	svn import test/data $(SVNURL) -m import
 	@echo
+#
 	@echo "TEST from SVNURL variant 1 no download with extra rev"
 	./svn2rpm -b .great -o $(TESTOUT) $(SVNURL)/test1
 	rpm -qp $(TESTOUT)/test1-19-75.1.great.noarch.rpm
 	rpm -qp $(TESTOUT)/test1-19-75.1.great.src.rpm
 	rm $(TESTOUT)/test1-19-75.1.great.noarch.rpm $(TESTOUT)/test1-19-75.1.great.src.rpm
 	@echo
+#
 	@echo "TEST from SVNURL variant 1 with download only source rpm"
 	./svn2rpm -s -o $(TESTOUT) $(SVNURL)/test2
 	rpm -qp $(TESTOUT)/test2-19-75.1.src.rpm
 	test ! -f $(TESTOUT)/test2-19-75.1.noarch.rpm
 	rm $(TESTOUT)/test2-19-75.1.src.rpm
 	@echo
+#
 	@echo "TEST from SVNURL variant 1 with download"
 	./svn2rpm -o $(TESTOUT) $(SVNURL)/test2
 	rpm -qp $(TESTOUT)/test2-19-75.1.noarch.rpm
 	rpm -qp $(TESTOUT)/test2-19-75.1.src.rpm
 	rm $(TESTOUT)/test2-19-75.1.noarch.rpm $(TESTOUT)/test2-19-75.1.src.rpm
 	@echo
+#
 	@echo "TEST from SVNURL variant 2 only source rpm"
 	./svn2rpm -s -o $(TESTOUT) $(SVNURL)/test3
 	rpm -qp $(TESTOUT)/test3-19-75.1.src.rpm
 	test ! -f $(TESTOUT)/test3-19-75.1.noarch.rpm
 	rm $(TESTOUT)/test3-19-75.1.src.rpm
 	@echo
+#
 	@echo "TEST from SVNURL variant 2"
 	./svn2rpm -o $(TESTOUT) $(SVNURL)/test3
 	rpm -qp $(TESTOUT)/test3-19-75.1.noarch.rpm
 	rpm -qp $(TESTOUT)/test3-19-75.1.src.rpm
 	rm $(TESTOUT)/test3-19-75.1.noarch.rpm $(TESTOUT)/test3-19-75.1.src.rpm
 	@echo
+#
 	@echo "TEST from SVNURL variant 2 only source rpm old revision"
 	svn mkdir $(SVNURL)/test3/newdir -m newrev
 	./svn2rpm -r 1 -s -o $(TESTOUT) $(SVNURL)/test3
@@ -66,6 +72,7 @@ test: clean
 	test ! -f $(TESTOUT)/test3-19-75.1.noarch.rpm
 	rm $(TESTOUT)/test3-19-75.1.src.rpm
 	@echo
+#
 	@echo "TEST from SVN-WC variant 2 only source rpm old revision"
 	svn co $(SVNURL)/test3 $(SVNWC)
 	rm -f $(TESTOUT)/test3-19-75.1.src.rpm $(TESTOUT)/test3-19-75.1.noarch.rpm
@@ -74,6 +81,7 @@ test: clean
 	test ! -f $(TESTOUT)/test3-19-75.1.noarch.rpm
 	rm -R $(TESTOUT)/test3-19-75.1.src.rpm $(SVNWC)
 	@echo
+#
 	@echo "TEST from SVN-WC variant 2 only source rpm with local changes"
 	svn co $(SVNURL)/test3 $(SVNWC)
 	sed -e 's/19$$/99/' -i $(SVNWC)/test3.spec # make local change that yields differen RPM name
@@ -82,6 +90,7 @@ test: clean
 	test ! -f $(TESTOUT)/test3-99-75.2.noarch.rpm
 	rm -R $(TESTOUT)/test3-99-75.2.src.rpm $(SVNWC)
 	@echo
+#
 	@echo "TEST from SVN-WC variant 2 with version=0"
 	svn co $(SVNURL)/test3 $(SVNWC)
 	sed -e 's/19$$/0/' -i $(SVNWC)/test3.spec # set version to 0
@@ -90,6 +99,16 @@ test: clean
 	test ! -f $(TESTOUT)/test3-2-75.2.noarch.rpm
 	rm -R $(TESTOUT)/test3-2-75.2.src.rpm $(SVNWC)
 	@echo
+#
+	@echo "TEST from SVN-WC variant 2 with version=1.0"
+	svn co $(SVNURL)/test3 $(SVNWC)
+	sed -e 's/19$$/1.0/' -i $(SVNWC)/test3.spec # set version to 1.0
+	./svn2rpm -s -o $(TESTOUT) $(SVNWC)
+	rpm -qp $(TESTOUT)/test3-1.0-75.2.src.rpm
+	test ! -f $(TESTOUT)/test3-1.0-75.2.noarch.rpm
+	rm -R $(TESTOUT)/test3-1.0-75.2.src.rpm $(SVNWC)
+	@echo
+#
 	@echo "TEST from SVN-WC variant 2 with release=0"
 	svn co $(SVNURL)/test3 $(SVNWC)
 	sed -e 's/75$$/0/' -i $(SVNWC)/test3.spec # set release to 0
@@ -98,6 +117,34 @@ test: clean
 	test ! -f $(TESTOUT)/test3-19-0.noarch.rpm
 	rm -R $(TESTOUT)/test3-19-0.src.rpm $(SVNWC)
 	@echo
+#
+	@echo "TEST from SVN-WC variant 2 with release=20%{?dist}"
+	svn co $(SVNURL)/test3 $(SVNWC)
+	sed -e 's/75$$/20%{?dist}/' -i $(SVNWC)/test3.spec # set release to 20%{?dist}
+	./svn2rpm -s -o $(TESTOUT) $(SVNWC)
+	rpm -qp $(TESTOUT)/test3-19-20.2.src.rpm
+	test ! -f $(TESTOUT)/test3-19-20.2.noarch.rpm
+	rm -R $(TESTOUT)/test3-19-20.2.src.rpm $(SVNWC)
+	@echo
+#
+	@echo "TEST from SVN-WC variant 2 with release=20%{?dist} and dist filled in and build nr"
+	svn co $(SVNURL)/test3 $(SVNWC)
+	sed -e 's/75$$/20%{?dist}/' -i $(SVNWC)/test3.spec # set release to 20%{?dist}
+	./svn2rpm -s -b .foo -o $(TESTOUT) -- $(SVNWC) --define "dist .dist"
+	rpm -qp $(TESTOUT)/test3-19-20.2.foo.dist.src.rpm
+	test ! -f $(TESTOUT)/test3-19-20.2.foo.dist.noarch.rpm
+	rm -R $(TESTOUT)/test3-19-20.2.foo.dist.src.rpm $(SVNWC)
+	@echo
+#
+#	@echo "TEST from SVN-WC variant 2 with release=0%{?dist} and dist filled in and build nr, should remove leading dot from build nr"
+#	svn co $(SVNURL)/test3 $(SVNWC)
+#	sed -e 's/75$$/0%{?dist}/' -i $(SVNWC)/test3.spec # set release to 0%{?dist}
+#	KEEPWORKDIR=1 bash -x ./svn2rpm -s -b .foo -o $(TESTOUT) -- $(SVNWC) --define "dist .dist"
+#	rpm -qp $(TESTOUT)/test3-19-foo.dist.src.rpm
+#	test ! -f $(TESTOUT)/test3-19-foo.dist.noarch.rpm
+#	rm -R $(TESTOUT)/test3-19-foo.dist.src.rpm $(SVNWC)
+#	@echo
+#
 	@echo "TEST from SVN-WC variant 2 with version= 0 and release=0 and extra buildnr"
 	svn co $(SVNURL)/test3 $(SVNWC)
 	sed -e 's/\(75\|19\)$$/0/' -i $(SVNWC)/test3.spec # set release and version to 0
@@ -106,6 +153,7 @@ test: clean
 	test ! -f $(TESTOUT)/test3-2-55.noarch.rpm
 	rm -R $(TESTOUT)/test3-2-55.src.rpm $(SVNWC)
 	@echo
+#
 	@echo "TEST from SVN-WC variant 2 with version= 0 and release=0 and extra buildnr that has leading ."
 	svn co $(SVNURL)/test3 $(SVNWC)
 	sed -e 's/\(75\|19\)$$/0/' -i $(SVNWC)/test3.spec # set release and version to 0
