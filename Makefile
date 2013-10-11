@@ -118,9 +118,9 @@ test: clean
 	rm -R $(TESTOUT)/test3-19-0.src.rpm $(SVNWC)
 	@echo
 #
-	@echo "TEST from SVN-WC variant 2 with release=20%{?dist}"
+	@echo "TEST from SVN-WC variant 2 with release=20%{?undefined_var} and undefined_var should not be set"
 	svn co $(SVNURL)/test3 $(SVNWC)
-	sed -e 's/75$$/20%{?dist}/' -i $(SVNWC)/test3.spec # set release to 20%{?dist}
+	sed -e 's/75$$/20%{?undefined_var}/' -i $(SVNWC)/test3.spec # set release to 20%{?undefined_var}
 	./svn2rpm -s -o $(TESTOUT) $(SVNWC)
 	rpm -qp $(TESTOUT)/test3-19-20.2.src.rpm
 	test ! -f $(TESTOUT)/test3-19-20.2.noarch.rpm
