@@ -2,6 +2,7 @@ TOPLEVEL := svn2rpm svn2rpm.spec Makefile DEBIAN test
 
 TESTTEMP := $(CURDIR)/test/temp
 TESTOUT := $(TESTTEMP)/out
+TESTWORK := $(TESTTEMP)/work
 SVNDIR := $(TESTTEMP)/svn
 SVNWC := $(TESTTEMP)/wc
 SVNURL := file://$(SVNDIR)
@@ -162,7 +163,16 @@ test: clean
 	test ! -f $(TESTOUT)/test3-2-55.noarch.rpm
 	rm -Rf $(TESTOUT)/test3-2-55.src.rpm $(SVNWC)
 	@echo
-  
+#
+	@echo "TEST from SVNURL and set and keep working directory"
+	mkdir -p $(TESTWORK)
+	./svn2rpm -b .great -o $(TESTOUT) -w $(TESTWORK) -k $(SVNURL)/test1
+	rpm -qp $(TESTOUT)/test1-19-75.1.great.noarch.rpm
+	rpm -qp $(TESTOUT)/test1-19-75.1.great.src.rpm
+	rm $(TESTOUT)/test1-19-75.1.great.noarch.rpm $(TESTOUT)/test1-19-75.1.great.src.rpm
+	test -f $(TESTWORK)/log.txt
+	rm -rf $(TESTWORK)
+	@echo
 
 
 deb: test
