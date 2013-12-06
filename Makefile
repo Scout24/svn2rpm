@@ -79,7 +79,7 @@ test: clean
 	./svn2rpm -r 1 -s -o $(TESTOUT) $(SVNWC)
 	rpm -qp $(TESTOUT)/test3-19-75.1.src.rpm
 	test ! -f $(TESTOUT)/test3-19-75.1.noarch.rpm
-	rm -R $(TESTOUT)/test3-19-75.1.src.rpm $(SVNWC)
+	rm -Rf $(TESTOUT)/test3-19-75.1.src.rpm $(SVNWC)
 	@echo
 #
 	@echo "TEST from SVN-WC variant 2 only source rpm with local changes"
@@ -88,7 +88,7 @@ test: clean
 	./svn2rpm -s -o $(TESTOUT) $(SVNWC)
 	rpm -qp $(TESTOUT)/test3-99-75.2.src.rpm
 	test ! -f $(TESTOUT)/test3-99-75.2.noarch.rpm
-	rm -R $(TESTOUT)/test3-99-75.2.src.rpm $(SVNWC)
+	rm -Rf $(TESTOUT)/test3-99-75.2.src.rpm $(SVNWC)
 	@echo
 #
 	@echo "TEST from SVN-WC variant 2 with version=0"
@@ -97,7 +97,7 @@ test: clean
 	./svn2rpm -s -o $(TESTOUT) $(SVNWC)
 	rpm -qp $(TESTOUT)/test3-2-75.2.src.rpm
 	test ! -f $(TESTOUT)/test3-2-75.2.noarch.rpm
-	rm -R $(TESTOUT)/test3-2-75.2.src.rpm $(SVNWC)
+	rm -Rf $(TESTOUT)/test3-2-75.2.src.rpm $(SVNWC)
 	@echo
 #
 	@echo "TEST from SVN-WC variant 2 with version=1.0"
@@ -106,7 +106,7 @@ test: clean
 	./svn2rpm -s -o $(TESTOUT) $(SVNWC)
 	rpm -qp $(TESTOUT)/test3-1.0-75.2.src.rpm
 	test ! -f $(TESTOUT)/test3-1.0-75.2.noarch.rpm
-	rm -R $(TESTOUT)/test3-1.0-75.2.src.rpm $(SVNWC)
+	rm -Rf $(TESTOUT)/test3-1.0-75.2.src.rpm $(SVNWC)
 	@echo
 #
 	@echo "TEST from SVN-WC variant 2 with release=0"
@@ -115,7 +115,7 @@ test: clean
 	./svn2rpm -s -o $(TESTOUT) $(SVNWC)
 	rpm -qp $(TESTOUT)/test3-19-0.src.rpm
 	test ! -f $(TESTOUT)/test3-19-0.noarch.rpm
-	rm -R $(TESTOUT)/test3-19-0.src.rpm $(SVNWC)
+	rm -Rf $(TESTOUT)/test3-19-0.src.rpm $(SVNWC)
 	@echo
 #
 	@echo "TEST from SVN-WC variant 2 with release=20%{?undefined_var} and undefined_var should not be set"
@@ -124,7 +124,7 @@ test: clean
 	./svn2rpm -s -o $(TESTOUT) $(SVNWC)
 	rpm -qp $(TESTOUT)/test3-19-20.2.src.rpm
 	test ! -f $(TESTOUT)/test3-19-20.2.noarch.rpm
-	rm -R $(TESTOUT)/test3-19-20.2.src.rpm $(SVNWC)
+	rm -Rf $(TESTOUT)/test3-19-20.2.src.rpm $(SVNWC)
 	@echo
 #
 	@echo "TEST from SVN-WC variant 2 with release=20%{?dist} and dist filled in and build nr"
@@ -133,7 +133,7 @@ test: clean
 	./svn2rpm -s -b .foo -o $(TESTOUT) -- $(SVNWC) --define "dist .dist"
 	rpm -qp $(TESTOUT)/test3-19-20.2.foo.dist.src.rpm
 	test ! -f $(TESTOUT)/test3-19-20.2.foo.dist.noarch.rpm
-	rm -R $(TESTOUT)/test3-19-20.2.foo.dist.src.rpm $(SVNWC)
+	rm -Rf $(TESTOUT)/test3-19-20.2.foo.dist.src.rpm $(SVNWC)
 	@echo
 #
 #	@echo "TEST from SVN-WC variant 2 with release=0%{?dist} and dist filled in and build nr, should remove leading dot from build nr"
@@ -142,7 +142,7 @@ test: clean
 #	KEEPWORKDIR=1 bash -x ./svn2rpm -s -b .foo -o $(TESTOUT) -- $(SVNWC) --define "dist .dist"
 #	rpm -qp $(TESTOUT)/test3-19-foo.dist.src.rpm
 #	test ! -f $(TESTOUT)/test3-19-foo.dist.noarch.rpm
-#	rm -R $(TESTOUT)/test3-19-foo.dist.src.rpm $(SVNWC)
+#	rm -Rf $(TESTOUT)/test3-19-foo.dist.src.rpm $(SVNWC)
 #	@echo
 #
 	@echo "TEST from SVN-WC variant 2 with version= 0 and release=0 and extra buildnr"
@@ -151,7 +151,7 @@ test: clean
 	./svn2rpm -s -b 55 -o $(TESTOUT) $(SVNWC)
 	rpm -qp $(TESTOUT)/test3-2-55.src.rpm
 	test ! -f $(TESTOUT)/test3-2-55.noarch.rpm
-	rm -R $(TESTOUT)/test3-2-55.src.rpm $(SVNWC)
+	rm -Rf $(TESTOUT)/test3-2-55.src.rpm $(SVNWC)
 	@echo
 #
 	@echo "TEST from SVN-WC variant 2 with version= 0 and release=0 and extra buildnr that has leading ."
@@ -160,7 +160,7 @@ test: clean
 	./svn2rpm -s -b .55 -o $(TESTOUT) $(SVNWC)
 	rpm -qp $(TESTOUT)/test3-2-55.src.rpm
 	test ! -f $(TESTOUT)/test3-2-55.noarch.rpm
-	rm -R $(TESTOUT)/test3-2-55.src.rpm $(SVNWC)
+	rm -Rf $(TESTOUT)/test3-2-55.src.rpm $(SVNWC)
 	@echo
   
 
