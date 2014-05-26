@@ -135,9 +135,9 @@ if test "${#SPECFILE[@]}" -ne 1 ; then
 fi
 
 # get package name and version from spec file
-PACKAGE_NAME="$( sed -ne '/Name:/{s/.*:[\t ]\+\(.*\)/\1/;P}' "$SPECFILE" )"
-PACKAGE_VERSION="$( sed -ne '/Version:/{s/.*:[\t ]\+\(.*\)/\1/;P}' "$SPECFILE" )"
-PACKAGE_SHORT_RELEASE="$( sed -ne '/Release:/{s/.*:[\t ]\+\([^%]*\)/\1/;P}' "$SPECFILE" )"
+PACKAGE_NAME="$( sed -ne '/Name:/{s/.*:[\t ]\+\(.*\)/\1/;p;q}' "$SPECFILE" )"
+PACKAGE_VERSION="$( sed -ne '/Version:/{s/.*:[\t ]\+\(.*\)/\1/;p;q}' "$SPECFILE" )"
+PACKAGE_SHORT_RELEASE="$( sed -ne '/Release:/{s/.*:[\t ]\+\([^%]*\)/\1/;p;q}' "$SPECFILE" )"
 
 if [[ "$PACKAGE_VERSION" == "0" ]] ; then
     # version 0 means put SVN Revision as version
