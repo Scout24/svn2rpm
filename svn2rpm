@@ -12,7 +12,7 @@ Export from SVN and build an SRC RPM package. Requirements:
 
 Usage:
 
-$PROGRAM [Options ...] <SVN URL|WORKING COPY PATH> [more rpmbuild parameters ...]
+$PROGRAM [Options ...] <SVN URL|WORKING COPY PATH> [-- more rpmbuild parameters ...]
 
 Options:
     -V          Version
@@ -29,7 +29,7 @@ Example:
 $PROGRAM <svn url> 
 $PROGRAM -b .is24 <working copy path>
 $PROGRAM -r 123 -b .is24 <working copy path>
-$PROGRAM <svn|wc> --define="key value"
+$PROGRAM <svn|wc> -- --define="key value"
 
 Note: The RPM package name and version are taken from the SPEC file!!
 

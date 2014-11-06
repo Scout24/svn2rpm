@@ -24,7 +24,7 @@ Export from SVN and build an SRC RPM package. Requirements:
 
 Usage:
 
-svn2rpm [Options ...] <SVN URL|WORKING COPY PATH> [more rpmbuild parameters ...]
+svn2rpm [Options ...] <SVN URL|WORKING COPY PATH> [-- more rpmbuild parameters ...]
 
 Options:
     -V          Version
@@ -40,7 +40,7 @@ Example:
 svn2rpm <svn url> 
 svn2rpm -b .is24 <working copy path>
 svn2rpm -r 123 -b .is24 <working copy path>
-svn2rpm <svn|wc> --define="key value"
+svn2rpm <svn|wc> -- --define="key value"
 
 Note: The RPM package name and version are taken from the SPEC file!!
 

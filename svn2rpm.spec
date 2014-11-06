@@ -8,9 +8,8 @@ URL: https://github.com/ImmobilienScout24/svn2rpm
 Source0: %{name}-%{version}.tar.gz
 BuildRoot:  %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 BuildArch: noarch
-Requires: rpmdevtools, rpm-build
-Requires: subversion
-BuildRequires: make, rpm-build, rpmdevtools
+Requires: rpmdevtools, rpm-build, subversion
+BuildRequires: make, rpmdevtools, rpm-build, subversion
 
 %description
 Export from SVN and build an SRC RPM package. Requirements:
