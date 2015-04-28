@@ -105,6 +105,7 @@ if [[ ! "$1" ]] ; then
 fi
 SVN="$1" ; shift
 export TMPDIR=${TMPDIR:-/data/tmp}
+[[ ! -d "$TMPDIR" ]] && export TMPDIR=/tmp
 WORK=${WORK:-"$(mktemp -d -t "$(basename $0)"-XXXXXXXXXX)"}
 # KEEPWORKDIR can be set externally to keep the work dir. Else it is empty by default.
 trap "exittrap" 0
