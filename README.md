@@ -5,7 +5,7 @@ svn2rpm
 Create RPM packages from SVN repository. The source files can be stored in 2 variants:
 
 1. SPEC and SOURCES: Here we keep all the Source*: and Patch*: files together with the .spec file. If the Source*: and Patch*: keys contain URLS then svn2rpm will use spectool to download them.
-2. SPEC and exploded Source: Here you must set `Source: %{name}-%{version}.tar.gz` and use `%setup` in your `%build` stage. In the %install stage you can then just copy the files/dirs into `%{buildroot}`.
+2. SPEC and exploded Source: Here you must set `Source: %{name}-%{version}.tar.gz` and use `%setup` in your `%build` stage. In the `%install` stage you can then just copy the files/dirs into `%{buildroot}`.
 
 The 2nd variant is especially useful for simple packages that just deploy a few files. The user sees the files in the SVN source location and only needs to write a few shell lines to put the files into the proper place. No hassle with packing archives, this is all abstracted away by svn2rpm.
 
