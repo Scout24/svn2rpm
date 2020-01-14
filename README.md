@@ -2,6 +2,8 @@ svn2rpm
 =======
 ![Logo](http://i.imgur.com/NWBidnZ.png)
 
+# This project is DEPRECATED and not any longer supported
+
 Create RPM packages from SVN repository. The source files can be stored in 2 variants:
 
 1. SPEC and SOURCES: Here we keep all the Source*: and Patch*: files together with the .spec file. If the Source*: and Patch*: keys contain URLS then svn2rpm will use spectool to download them.
